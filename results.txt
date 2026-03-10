@@ -1,0 +1,6 @@
+Traceback (most recent call last):
+  File "/home/runner/work/VigilantOnion/VigilantOnion/observer.py", line 15, in <module>
+    from utils.engines.crawler import TorConnect
+  File "/home/runner/work/VigilantOnion/VigilantOnion/utils/engines/crawler.py", line 17, in <module>
+    import yara
+ModuleNotFoundError: No module named 'yara'
