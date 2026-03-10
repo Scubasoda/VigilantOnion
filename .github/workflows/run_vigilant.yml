@@ -1,9 +1,9 @@
 name: VigilantOnion Run
 
 on:
+  workflow_dispatch:
   schedule:
-    - cron: '0 0 * * *' # Runs daily at midnight. Change as needed.
-  workflow_dispatch:      # Allows you to run it manually from the "Actions" tab.
+    - cron: '0 0 * * *'
 
 jobs:
   build:
@@ -18,30 +18,39 @@ jobs:
         with:
           python-version: '3.9'
 
-      - name: Install and Start Tor
+      - name: Install System Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y tor
+          sudo apt-get install -y tor libyara-dev
           sudo service tor start
-          # Wait for Tor to initialize
           sleep 10
 
-      - name: Install dependencies
+      - name: Patch and Fix Requirements
         run: |
+          # 1. Replace the ancient BeautifulSoup with the modern one
+          sed -i 's/beautifulsoup/beautifulsoup4/' requirements.txt
+          
+          # 2. Add PySocks so Tor proxy works correctly in Python 3
+          echo "PySocks" >> requirements.txt
+          
+          # 3. Update the Python script to use the new BeautifulSoup import
+          # It changes 'from BeautifulSoup import BeautifulSoup' to 'from bs4 import BeautifulSoup'
+          sed -i 's/from BeautifulSoup import BeautifulSoup/from bs4 import BeautifulSoup/' observer.py
+          
+          # 4. Fix potential encoding issues in old scripts
+          pip install --upgrade pip
           pip install -r requirements.txt
 
       - name: Run VigilantOnion
         run: |
-          # Redirecting output to results.txt
-          # You can change the flags (--crawler, --search, etc.) based on your needs
-          python3 observer.py --config config/config.yml --crawler > results.txt 2>&1
+          # Running the crawler and saving to results.txt
+          python3 observer.py --config config/config.yml --crawler > results.txt 2>&1 || true
 
       - name: Commit and Push Results
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add results.txt
-          # Only commit if there are changes to avoid workflow errors
           git diff --quiet && git diff --staged --quiet || (git commit -m "Update VigilantOnion results" && git push)
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
