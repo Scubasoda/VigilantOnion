@@ -68,13 +68,15 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           
-          # Ensure the database directory exists before adding
+          # Create the folder if it doesn't exist so git add doesn't fail
           mkdir -p database
+          
+          # Add the results text and the SQLite database
           git add results.txt database/
           
           if [ -n "$(git status --porcelain)" ]; then
-            git commit -m "Spider Update: $(date +'%Y-%m-%d') findings"
+            git commit -m "Spider Update: $(date +'%Y-%m-%d')"
             git push
           else
-            echo "No new data found in this run."
+            echo "No changes to commit."
           fi
