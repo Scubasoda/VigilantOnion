@@ -32,31 +32,38 @@ jobs:
       - name: Install System Dependencies
         run: |
           sudo apt-get update
-          # Added yara to match libyara-dev
-          sudo apt-get install -y tor libyara-dev yara
+          # Added python3-dev and ensured yara is installed correctly
+          sudo apt-get install -y tor libyara-dev yara python3-dev
           sudo service tor start
-          # Better check: Wait until Tor is actually listening on port 9050
-          for i in {1..10}; do if nc -z localhost 9050; then echo "Tor is ready"; break; fi; echo "Waiting for Tor..."; sleep 2; done
+          # Wait for Tor
+          for i in {1..10}; do if nc -z localhost 9050; then echo "Tor is ready"; break; fi; sleep 2; done
 
       - name: Patch and Install
         run: |
-          # Keep the code patch for observer.py just in case
-          sed -i 's/from BeautifulSoup import BeautifulSoup/from bs4 import BeautifulSoup/' observer.py || true
+          # 1. Ensure the directory exists BEFORE the script runs
+          mkdir -p database
           
+          # 2. Fix legacy imports
+          grep -rl "from BeautifulSoup import BeautifulSoup" . | xargs sed -i 's/from BeautifulSoup import BeautifulSoup/from bs4 import BeautifulSoup/g' || true
+          
+          # 3. Upgrade pip and install
           python -m pip install --upgrade pip
+          # Force reinstall yara-python to ensure it links to the system libyara
+          pip install --force-reinstall yara-python
           pip install -r requirements.txt
 
-      - name: Discovery Phase (Finding Seeds)
+      - name: Discovery Phase
         run: |
-          # The || true ensures the workflow continues even if a search engine blocks the runner
+          # Added a check to see if the database folder is there
+          ls -d database
           python3 observer.py --config config/config.yml --search -e "gist,reddit,cybersecuritynews,discoverdarkwebservice" || true
 
-      - name: Crawl Phase (Spidering the Darknet)
+      - name: Crawl Phase
         run: |
           echo "--- Scan Run: $(date) ---" >> results.txt
-          # Using 'timeout' to ensure the spider doesn't run forever and hit GitHub's 6-hour limit
-          timeout 5h python3 observer.py --config config/config.yml --crawler >> results.txt 2>&1 || true
-
+          # We add PYTHONPATH=. to make sure it sees the utils folder correctly
+          export PYTHONPATH=$PYTHONPATH:.
+          python3 observer.py --config config/config.yml --crawler >> results.txt 2>&1 || true
       - name: Commit Database and Results
         run: |
           git config --global user.name "github-actions[bot]"
