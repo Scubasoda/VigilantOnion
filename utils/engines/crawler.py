@@ -151,7 +151,7 @@ class TorConnect:
         """
         if raw is not None:
             file = os.path.join(yarafile)
-            rules = yara.compile(file)
+            rules = yara.compile(filepath='utils/engines/rules.yara')
             matches = rules.match(data=raw)
             return matches
 
@@ -341,3 +341,4 @@ class TorConnect:
                 requests.exceptions.InvalidURL) as e:
             self.logger.debug(
                 f"Um erro ocorreu.\n\n{str(e)}\n")
+
