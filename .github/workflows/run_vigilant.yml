@@ -3,12 +3,15 @@ name: VigilantOnion Persistent Spider
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 0 * * *' # Runs every night at midnight
+    - cron: '0 0 * * *'
+
+# Added explicit permissions to allow the bot to commit back to your repo
+permissions:
+  contents: write
 
 jobs:
   spider:
     runs-on: ubuntu-latest
-    # Prevent multiple runs from overwriting each other if they overlap
     concurrency: 
       group: spider-group
       cancel-in-progress: false
@@ -16,54 +19,62 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
+        with:
+          # Fetch all history so the git commit doesn't fail on a shallow clone
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
-          python-version: '3.12' # Changed from '3.x' or '3.14' to '3.12'
+          python-version: '3.12'
           cache: 'pip'
 
       - name: Install System Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y tor libyara-dev
+          # Added yara to match libyara-dev
+          sudo apt-get install -y tor libyara-dev yara
           sudo service tor start
-          sleep 15 # Give Tor a moment to establish a circuit
+          # Better check: Wait until Tor is actually listening on port 9050
+          for i in {1..10}; do if nc -z localhost 9050; then echo "Tor is ready"; break; fi; echo "Waiting for Tor..."; sleep 2; done
 
       - name: Patch and Install
         run: |
-          # Fixing the BeautifulSoup 3 vs 4 issue
-          sed -i 's/beautifulsoup/beautifulsoup4/' requirements.txt
+          # Use the modernized requirements we discussed
+          # We add yara-python here because it's required for the libyara-dev you installed
+          echo "yara-python" >> requirements.txt
           echo "PySocks" >> requirements.txt
-          sed -i 's/from BeautifulSoup import BeautifulSoup/from bs4 import BeautifulSoup/' observer.py
+          
+          # Maintain your existing fixes for the old code base
+          sed -i 's/beautifulsoup/beautifulsoup4/' requirements.txt
+          sed -i 's/from BeautifulSoup import BeautifulSoup/from bs4 import BeautifulSoup/' observer.py || true
+          
+          python -m pip install --upgrade pip
           pip install -r requirements.txt
 
       - name: Discovery Phase (Finding Seeds)
         run: |
-          # This finds onion links shared on the "Clear Web"
+          # The || true ensures the workflow continues even if a search engine blocks the runner
           python3 observer.py --config config/config.yml --search -e "gist,reddit,cybersecuritynews,discoverdarkwebservice" || true
 
       - name: Crawl Phase (Spidering the Darknet)
         run: |
-          # This crawls the links found in the discovery phase
-          # We use '>>' to append to results.txt so you keep a history
           echo "--- Scan Run: $(date) ---" >> results.txt
-          python3 observer.py --config config/config.yml --crawler >> results.txt 2>&1 || true
+          # Using 'timeout' to ensure the spider doesn't run forever and hit GitHub's 6-hour limit
+          timeout 5h python3 observer.py --config config/config.yml --crawler >> results.txt 2>&1 || true
 
       - name: Commit Database and Results
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           
-          # Add the results file and the database folder
+          # Ensure the database directory exists before adding
+          mkdir -p database
           git add results.txt database/
           
-          # Commit only if changes exist
           if [ -n "$(git status --porcelain)" ]; then
-            git commit -m "Spider Update: Found new sites and updated DB"
+            git commit -m "Spider Update: $(date +'%Y-%m-%d') findings"
             git push
           else
             echo "No new data found in this run."
           fi
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
