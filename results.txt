@@ -17,3 +17,7 @@ Traceback (most recent call last):
     conn = sqlite3.connect(
            ^^^^^^^^^^^^^^^^
 sqlite3.OperationalError: unable to open database file
+--- Scan Run: Fri Mar 13 05:10:40 UTC 2026 ---
+/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/requests/__init__.py:113: RequestsDependencyWarning: urllib3 (1.26.20) or chardet (7.1.0)/charset_normalizer (3.4.5) doesn't match a supported version!
+  warnings.warn(
+2026-03-13 05:10:41.012 INFO observer - start: Starting the Crawler process.
