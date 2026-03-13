@@ -6,11 +6,12 @@ server_proxy: 127.0.0.1
 port_proxy: 9050
 type_proxy: socks5h
 timeout: 30
-score_categorie: 20
-score_keywords: 40
+score_categorie: 40
+score_keywords: 20
 count_categories: 5
 daystime: 10
 # Set to False unless you have a logging listener running
 sendlog: False 
 logport: 5151
 logip: "127.0.0.1"
+
