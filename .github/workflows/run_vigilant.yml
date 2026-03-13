@@ -40,13 +40,7 @@ jobs:
 
       - name: Patch and Install
         run: |
-          # Use the modernized requirements we discussed
-          # We add yara-python here because it's required for the libyara-dev you installed
-          echo "yara-python" >> requirements.txt
-          echo "PySocks" >> requirements.txt
-          
-          # Maintain your existing fixes for the old code base
-          sed -i 's/beautifulsoup/beautifulsoup4/' requirements.txt
+          # Keep the code patch for observer.py just in case
           sed -i 's/from BeautifulSoup import BeautifulSoup/from bs4 import BeautifulSoup/' observer.py || true
           
           python -m pip install --upgrade pip
