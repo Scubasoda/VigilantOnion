@@ -20,7 +20,8 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
-          python-version: '3.x'
+          python-version: '3.12' # Changed from '3.x' or '3.14' to '3.12'
+          cache: 'pip'
 
       - name: Install System Dependencies
         run: |
