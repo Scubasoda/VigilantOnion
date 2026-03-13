@@ -4,3 +4,16 @@ Traceback (most recent call last):
   File "/home/runner/work/VigilantOnion/VigilantOnion/utils/engines/crawler.py", line 17, in <module>
     import yara
 ModuleNotFoundError: No module named 'yara'
+--- Scan Run: Fri Mar 13 04:53:16 UTC 2026 ---
+/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/requests/__init__.py:113: RequestsDependencyWarning: urllib3 (2.6.3) or chardet (7.1.0)/charset_normalizer (3.4.5) doesn't match a supported version!
+  warnings.warn(
+Traceback (most recent call last):
+  File "/home/runner/work/VigilantOnion/VigilantOnion/observer.py", line 261, in <module>
+    VigilantOnion().start
+  File "/home/runner/work/VigilantOnion/VigilantOnion/observer.py", line 136, in start
+    self.database = DataBase(
+                    ^^^^^^^^^
+  File "/home/runner/work/VigilantOnion/VigilantOnion/utils/engines/dbconnection.py", line 27, in __init__
+    conn = sqlite3.connect(
+           ^^^^^^^^^^^^^^^^
+sqlite3.OperationalError: unable to open database file
