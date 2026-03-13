@@ -10,3 +10,5 @@ pyasn1-modules>=0.3.0
 pytz>=2024.1
 PyYAML>=6.0.1
 requests>=2.31.0
+PySocks>=1.7.1
+yara-python>=4.5.0
