@@ -52,11 +52,14 @@ jobs:
           pip install --force-reinstall yara-python
           pip install -r requirements.txt
 
-      - name: Discovery Phase
+      - name: Discovery Phase (Finding Seeds)
         run: |
-          # Added a check to see if the database folder is there
-          ls -d database
-          python3 observer.py --config config/config.yml --search -e "gist,reddit,cybersecuritynews,discoverdarkwebservice" || true
+          export PYTHONPATH=$GITHUB_WORKSPACE
+          # Removed 'reddit' to prevent the KeyError crash
+          # We run them one by one so one failure doesn't stop the whole run
+          python3 observer.py --config config/config.yml --search -e "gist" || true
+          python3 observer.py --config config/config.yml --search -e "cybersecuritynews" || true
+          python3 observer.py --config config/config.yml --search -e "discoverdarkwebservice" || true
 
       - name: Crawl Phase
         run: |
